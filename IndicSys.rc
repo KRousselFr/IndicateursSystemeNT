@@ -1,0 +1,35 @@
+
+#include "resource.h"
+#include "afxres.h"
+
+////////////////////////////////////////////////////////////////////////////////
+// Icon
+
+ID_ICONE_INDIC_SYS      ICON    DISCARDABLE     "Indicateur.ico"
+
+////////////////////////////////////////////////////////////////////////////////
+// Version information
+
+VS_VERSION_INFO VERSIONINFO
+    FILEVERSION    1,0,1,0
+    PRODUCTVERSION 1,0,1,0
+{
+    BLOCK "StringFileInfo"
+    {
+        BLOCK "040C04E4"
+        {
+            VALUE "CompanyName",        "—\0"
+            VALUE "FileDescription",    "Indicateurs système NT\0"
+            VALUE "FileVersion",        "1.0.1.0\0"
+            VALUE "LegalCopyright",     "(c) 2018—2019 KR\0"
+            VALUE "OriginalFilename",   "IndicSys.exe\0"
+            VALUE "ProductName",        "Indicateurs système NT\0"
+            VALUE "ProductVersion",     "1.0.1.0\0"
+        }
+    }
+    BLOCK "VarFileInfo"
+    {
+        // langID = 0x040C (français), charsetID = 1252 (Windows occidental)
+        VALUE "Translation", 0x040C, 1252
+    }
+}
