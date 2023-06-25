@@ -11,8 +11,8 @@ ID_ICONE_INDIC_SYS      ICON    DISCARDABLE     "Indicateur.ico"
 // Version information
 
 VS_VERSION_INFO VERSIONINFO
-    FILEVERSION    1,0,1,0
-    PRODUCTVERSION 1,0,1,0
+    FILEVERSION    1,2,0,0
+    PRODUCTVERSION 1,2,0,0
 {
     BLOCK "StringFileInfo"
     {
@@ -20,11 +20,11 @@ VS_VERSION_INFO VERSIONINFO
         {
             VALUE "CompanyName",        "—\0"
             VALUE "FileDescription",    "Indicateurs système NT\0"
-            VALUE "FileVersion",        "1.0.1.0\0"
-            VALUE "LegalCopyright",     "(c) 2018—2019 KR\0"
+            VALUE "FileVersion",        "1.2.0.0\0"
+            VALUE "LegalCopyright",     "(c) 2018—2023 KR\0"
             VALUE "OriginalFilename",   "IndicSys.exe\0"
             VALUE "ProductName",        "Indicateurs système NT\0"
-            VALUE "ProductVersion",     "1.0.1.0\0"
+            VALUE "ProductVersion",     "1.2.0.0\0"
         }
     }
     BLOCK "VarFileInfo"

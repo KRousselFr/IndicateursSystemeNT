@@ -38,6 +38,9 @@ static const UINT STYLE_TXT = DT_CENTER | DT_VCENTER | DT_SINGLELINE
 /* taille de caractères à utiliser pour l'affichage */
 static const int TAILLE_CARAC = -16 ;
 
+/* hauteur en pixels des caractères affichés dans la fenêtre */
+static const LONG HAUTEUR_CARAC = 21L ;
+
 
 /* === VARIABLES GLOBALES === */
 
@@ -45,6 +48,8 @@ static SYSTEMTIME dtHrDerniereMAJ = { .wSecond = 0xFFFF } ;
 static WCHAR chnDate[TAILLE_MAX_CHN_AFF] = L"%d" ;
 static WCHAR chnHeure[TAILLE_MAX_CHN_AFF] = L"%T" ;
 static WCHAR chnCharge[TAILLE_MAX_CHN_AFF] = L"CPU : %d %% — RAM : %u %%" ;
+static BOOL batteriePresente = TRUE ;
+static WCHAR chnBatt[TAILLE_MAX_CHN_AFF] = L"Batt. : %u %%%s" ;
 
 
 /* === FONCTIONS === */
@@ -148,12 +153,15 @@ VOID CALLBACK TimerMAJProc (HWND hwnd,
 		                  L"Echec de GetSystemTimes() !") ;
 		ExitProcess ((UINT) -2) ;
 	}
-	ULARGE_INTEGER idleTicks = { .LowPart = idleFT.dwLowDateTime,
-	                             .HighPart = idleFT.dwHighDateTime },
-	               kernTicks = { .LowPart = kernFT.dwLowDateTime,
-	                             .HighPart = kernFT.dwHighDateTime },
-	               userTicks = { .LowPart = userFT.dwLowDateTime,
-	                             .HighPart = userFT.dwHighDateTime } ;
+	ULARGE_INTEGER idleTicks ;
+	idleTicks.LowPart = idleFT.dwLowDateTime ;
+	idleTicks.HighPart = idleFT.dwHighDateTime ;
+	ULARGE_INTEGER kernTicks ;
+	kernTicks.LowPart = kernFT.dwLowDateTime ;
+	kernTicks.HighPart = kernFT.dwHighDateTime ;
+	ULARGE_INTEGER userTicks ;
+	userTicks.LowPart = userFT.dwLowDateTime ;
+	userTicks.HighPart = userFT.dwHighDateTime ;
 	ULONGLONG total = kernTicks.QuadPart + userTicks.QuadPart ;
 	ULONGLONG occup = total - idleTicks.QuadPart ;
 	ULONGLONG dTotal = total - ancienTotal ;
@@ -165,6 +173,29 @@ VOID CALLBACK TimerMAJProc (HWND hwnd,
 	swprintf (chnCharge, TAILLE_MAX_CHN_AFF,
 	          L"CPU : %u %% — RAM : %u %%",
 	          chargeProc, chargeMem) ;
+
+	/* niveau de la batterie et présence / absence de l'adaptateur secteur */
+	if (batteriePresente)
+	{
+		SYSTEM_POWER_STATUS powerStatus ;
+		ok = GetSystemPowerStatus (&powerStatus) ;
+		if (!ok)
+		{
+			ShowErrorMessage (szAppName,
+			                  L"Echec de GetSystemPowerStatus() !") ;
+			ExitProcess ((UINT) -3) ;	
+		}
+		if (powerStatus.BatteryFlag & BATTERY_FLAG_NO_BATTERY)
+		{
+			batteriePresente = FALSE ;
+		}
+		BOOL enCharge = ( (powerStatus.BatteryFlag & BATTERY_FLAG_CHARGING) ||
+		                  (powerStatus.ACLineStatus == AC_LINE_ONLINE) ) ;
+		swprintf (chnBatt, TAILLE_MAX_CHN_AFF,
+		          L"Batt. : %u %%%s",
+		          powerStatus.BatteryLifePercent,
+		          ( enCharge ? L" (en charge)" : L"" ) ) ;
+	}
 
 	/* force la fenêtre à redessiner son contenu,
 	   et la ramène au premier plan */
@@ -199,8 +230,9 @@ LRESULT CALLBACK MainWndProc (HWND hwnd,
 	static HBRUSH hBrush ;
 	HDC hdc ;
 	PAINTSTRUCT ps ;
-	RECT rectFen, rectDate, rectHeure, rectCharge ;
+	RECT rectFen, rectDate, rectHeure, rectCharge, rectBatt ;
 	BOOL ok ;
+	LONG ecart ;
 
 	switch (message)
 	{
@@ -248,16 +280,19 @@ LRESULT CALLBACK MainWndProc (HWND hwnd,
 		GetClientRect (hwnd, &rectFen) ;
 
 		/* position des textes à écrire */
-		rectDate.left = rectHeure.left = rectCharge.left
-		   = rectFen.left + 8L ;
-		rectDate.right = rectHeure.right = rectCharge.right
-		   = rectFen.right - 8L ;
-		rectDate.top = rectFen.top + 8L ;
-		rectDate.bottom = rectDate.top + 21L ;
-		rectHeure.top = rectDate.bottom + 8L ;
-		rectHeure.bottom = rectHeure.top + 21L ;
-		rectCharge.bottom = rectFen.bottom - 8L ;
-		rectCharge.top = rectCharge.bottom - 21L ;
+		ecart = ( batteriePresente ? 3L : 8L ) ;
+		rectDate.left = rectHeure.left = rectCharge.left = rectBatt.left
+		   = rectFen.left + ecart ;
+		rectDate.right = rectHeure.right = rectCharge.right = rectBatt.right
+		   = rectFen.right - ecart ;
+		rectDate.top = rectFen.top + ecart ;
+		rectDate.bottom = rectDate.top + HAUTEUR_CARAC ;
+		rectHeure.top = rectDate.bottom + ecart ;
+		rectHeure.bottom = rectHeure.top + HAUTEUR_CARAC ;
+		rectCharge.top = rectHeure.bottom + ecart ;
+		rectCharge.bottom = rectCharge.top + HAUTEUR_CARAC ;
+		rectBatt.bottom = rectFen.bottom - ecart ;
+		rectBatt.top = rectBatt.bottom - HAUTEUR_CARAC ;
 
 		/* affichage des textes */
 		FillRect (hdc, &rectDate, (HBRUSH) (COLOR_WINDOW + 1) ) ;
@@ -278,6 +313,15 @@ LRESULT CALLBACK MainWndProc (HWND hwnd,
 		           -1,
 		           &rectCharge,
 		           STYLE_TXT) ;
+		if (batteriePresente)
+		{
+			FillRect (hdc, &rectBatt, (HBRUSH) (COLOR_WINDOW + 1) ) ;
+			DrawTextW (hdc,
+			           chnBatt,
+			           -1,
+			           &rectBatt,
+			           STYLE_TXT) ;
+		}
 
 		SelectObject (hdc, GetStockObject (SYSTEM_FONT)) ;
 		SelectObject (hdc, GetStockObject (WHITE_BRUSH)) ;
@@ -396,4 +440,5 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	/* programme terminé */
 	return (int) msg.wParam ;
 }
+
 
