@@ -189,12 +189,13 @@ VOID CALLBACK TimerMAJProc (HWND hwnd,
 		{
 			batteriePresente = FALSE ;
 		}
-		BOOL enCharge = ( (powerStatus.BatteryFlag & BATTERY_FLAG_CHARGING) ||
-		                  (powerStatus.ACLineStatus == AC_LINE_ONLINE) ) ;
+		BOOL enCharge = (powerStatus.BatteryFlag & BATTERY_FLAG_CHARGING) ;
+		BOOL surSecteur = (powerStatus.ACLineStatus == AC_LINE_ONLINE) ;
 		swprintf (chnBatt, TAILLE_MAX_CHN_AFF,
 		          L"Batt. : %u %%%s",
 		          powerStatus.BatteryLifePercent,
-		          ( enCharge ? L" (en charge)" : L"" ) ) ;
+		          ( enCharge ? L" (en charge)"
+		                     : ( surSecteur ? L" (sur secteur)" : L"" ) )) ;
 	}
 
 	/* force la fenêtre à redessiner son contenu,
